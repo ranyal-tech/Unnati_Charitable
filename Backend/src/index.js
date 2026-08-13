@@ -12,18 +12,38 @@ const PORT = process.env.PORT || 5000;
 
 const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')
   .split(',')
-  .map((origin) => origin.trim())
+  .map((origin) => origin.trim().replace(/\/$/, ''))
   .filter(Boolean);
+
+function isOriginAllowed(origin) {
+  if (!origin) {
+    return true;
+  }
+
+  const normalizedOrigin = origin.replace(/\/$/, '');
+
+  if (allowedOrigins.includes(normalizedOrigin)) {
+    return true;
+  }
+
+  // Allow Vercel production and preview deployment URLs
+  if (/^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(normalizedOrigin)) {
+    return true;
+  }
+
+  return false;
+}
 
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (isOriginAllowed(origin)) {
         callback(null, true);
         return;
       }
 
-      callback(new Error('Not allowed by CORS'));
+      console.warn('CORS blocked origin:', origin);
+      callback(null, false);
     },
     credentials: true,
   })
@@ -47,10 +67,6 @@ app.use((_req, res) => {
 });
 
 app.use((err, _req, res, _next) => {
-  if (err.message === 'Not allowed by CORS') {
-    return res.status(403).json({ error: 'Origin not allowed by CORS' });
-  }
-
   console.error('Unhandled error:', err);
   res.status(500).json({ error: 'Internal server error' });
 });
