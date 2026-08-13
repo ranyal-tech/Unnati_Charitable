@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DonationStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+model DonationCategory {
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  description  String
+  imageUrl     String?
+  targetAmount Float?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  donations Donation[]
+
+  @@index([slug])
+  @@index([isActive])
+}
+
+model Donation {
+  id                 String           @id @default(cuid())
+  categoryId         String
+  category           DonationCategory @relation(fields: [categoryId], references: [id])
+  donorName          String
+  donorEmail         String
+  donorPhone         String?
+  amount             Float
+  currency           String           @default("INR")
+  message            String?
+  status             DonationStatus   @default(PENDING)
+  cfOrderId          String?
+  cfPaymentId        String?
+  cfPaymentSessionId String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  @@index([categoryId])
+  @@index([status])
+  @@index([cfOrderId])
+  @@index([createdAt])
+}
