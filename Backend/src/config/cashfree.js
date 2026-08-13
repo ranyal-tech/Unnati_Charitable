@@ -87,9 +87,27 @@ function getCashfreeHeaders() {
   };
 }
 
+function sanitizeEnvUrl(value = '', label = 'URL') {
+  let url = value.trim();
+
+  // Fix common copy-paste mistakes from .env or Render dashboard
+  url = url.replace(/^["']|["']$/g, '');
+  url = url.replace(/^(FRONTEND_URL|BACKEND_URL)\s*=\s*/i, '');
+  url = url.replace(/^["']|["']$/g, '');
+  url = url.replace(/\/$/, '');
+
+  if (!/^https?:\/\/.+/i.test(url)) {
+    throw new CashfreeConfigError(
+      `${label} is invalid: "${value}". Set only the URL, e.g. https://unnati-charitable-api.onrender.com`
+    );
+  }
+
+  return url;
+}
+
 function getCashfreePublicUrls() {
-  const frontendUrl = (process.env.FRONTEND_URL || '').trim().replace(/\/$/, '');
-  const backendUrl = (process.env.BACKEND_URL || '').trim().replace(/\/$/, '');
+  const frontendUrl = sanitizeEnvUrl(process.env.FRONTEND_URL, 'FRONTEND_URL');
+  const backendUrl = sanitizeEnvUrl(process.env.BACKEND_URL, 'BACKEND_URL');
 
   if (!frontendUrl || !backendUrl) {
     throw new CashfreeConfigError(
@@ -115,6 +133,18 @@ function validateCashfreeConfig() {
   getCashfreeEnvironment();
 }
 
+function trySanitizeEnvUrl(value, label) {
+  if (!value) {
+    return '(not set)';
+  }
+
+  try {
+    return sanitizeEnvUrl(value, label);
+  } catch {
+    return `(invalid: ${value})`;
+  }
+}
+
 function logCashfreeConfig() {
   const environment = getCashfreeEnvironment();
   const baseUrl = getCashfreeBaseUrl();
@@ -123,6 +153,9 @@ function logCashfreeConfig() {
   const backendUrl = process.env.BACKEND_URL || '';
 
   console.log(`Cashfree ready: ${environment} -> ${baseUrl}`);
+  console.log(
+    `Public URLs: frontend=${trySanitizeEnvUrl(frontendUrl, 'FRONTEND_URL')} backend=${trySanitizeEnvUrl(backendUrl, 'BACKEND_URL')}`
+  );
 
   if (
     environment === 'production' &&

@@ -48,6 +48,14 @@ function mapCashfreeError(error) {
     };
   }
 
+  if (cashfreeError?.code === 'order_meta.notify_url_invalid') {
+    return {
+      status: 400,
+      message:
+        'Cashfree rejected the webhook URL. On Render, set BACKEND_URL to only https://unnati-charitable-api.onrender.com (no quotes, no BACKEND_URL= prefix).',
+    };
+  }
+
   if (cashfreeError?.message) {
     return { status: 502, message: cashfreeError.message };
   }
