@@ -31,6 +31,11 @@ function isOriginAllowed(origin) {
     return true;
   }
 
+  // Allow the production domain and its www subdomain
+  if (/^https:\/\/(www\.)?unnatiseva\.com$/i.test(normalizedOrigin)) {
+    return true;
+  }
+
   return false;
 }
 
