@@ -3,22 +3,35 @@ const {
   CashfreeConfigError,
   createCashfreeOrder,
   getCashfreeOrderStatus,
+  getCashfreeOrderPayments,
   getCashfreePublicUrls,
 } = require('../config/cashfree');
+const {
+  completeDonation,
+  completeDonationsByOrderId,
+  sendCertificateIfNeeded,
+} = require('../services/donationCompletionService');
+
+const categoryInclude = {
+  category: {
+    select: { name: true, slug: true },
+  },
+};
 
 function validateDonationInput(body) {
   const { categorySlug, amount, donorName, donorEmail } = body;
 
-  if (!categorySlug || !amount || !donorName || !donorEmail) {
+  if (!categorySlug || amount === undefined || amount === null || !donorName || !donorEmail) {
     return 'categorySlug, amount, donorName, and donorEmail are required';
   }
 
-  if (typeof amount !== 'number' || amount < 1) {
+  const parsedAmount = Number(amount);
+  if (!Number.isFinite(parsedAmount) || parsedAmount < 1) {
     return 'Amount must be a number greater than 0';
   }
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(donorEmail)) {
+  if (!emailRegex.test(String(donorEmail).trim())) {
     return 'Invalid email address';
   }
 
@@ -52,7 +65,7 @@ function mapCashfreeError(error) {
     return {
       status: 400,
       message:
-        'Cashfree rejected the webhook URL. On Render, set BACKEND_URL to only https://unnati-charitable-api.onrender.com (no quotes, no BACKEND_URL= prefix).',
+        'Cashfree rejected the webhook URL. Set BACKEND_URL to only your API URL (no quotes, no BACKEND_URL= prefix).',
     };
   }
 
@@ -61,6 +74,149 @@ function mapCashfreeError(error) {
   }
 
   return { status: 500, message: 'Failed to create donation order' };
+}
+
+function extractWebhookOrderId(payload = {}) {
+  return (
+    payload.order?.order_id ||
+    payload.order_id ||
+    payload.payment?.order_id ||
+    null
+  );
+}
+
+function isCashfreePaymentSuccess({ paymentStatus, orderStatus, webhookType }) {
+  return (
+    paymentStatus === 'SUCCESS' ||
+    orderStatus === 'PAID' ||
+    webhookType === 'PAYMENT_SUCCESS_WEBHOOK'
+  );
+}
+
+const FAILED_PAYMENT_STATUSES = new Set([
+  'FAILED',
+  'CANCELLED',
+  'USER_DROPPED',
+  'VOID',
+]);
+
+const FAILED_ORDER_STATUSES = new Set(['FAILED', 'EXPIRED', 'TERMINATED']);
+
+function isFailedPaymentStatus(status) {
+  return FAILED_PAYMENT_STATUSES.has(status);
+}
+
+function isFailedOrderStatus(status) {
+  return FAILED_ORDER_STATUSES.has(status);
+}
+
+function isCashfreePaymentFailed({ paymentStatus, orderStatus, webhookType }) {
+  return (
+    isFailedPaymentStatus(paymentStatus) ||
+    isFailedOrderStatus(orderStatus) ||
+    webhookType === 'PAYMENT_FAILED_WEBHOOK' ||
+    webhookType === 'PAYMENT_USER_DROPPED_WEBHOOK'
+  );
+}
+
+function findSuccessfulPayment(payments = []) {
+  return payments.find((payment) => payment.payment_status === 'SUCCESS');
+}
+
+function findFailedPayment(payments = []) {
+  return payments.find((payment) => isFailedPaymentStatus(payment.payment_status));
+}
+
+function hasPendingPayment(payments = []) {
+  return payments.some((payment) => payment.payment_status === 'PENDING');
+}
+
+async function failDonation(donationId) {
+  const donation = await prisma.donation.findUnique({
+    where: { id: donationId },
+    include: categoryInclude,
+  });
+
+  if (!donation || donation.status !== 'PENDING') {
+    return donation;
+  }
+
+  return prisma.donation.update({
+    where: { id: donationId },
+    data: { status: 'FAILED' },
+    include: categoryInclude,
+  });
+}
+
+async function failDonationsByOrderId(cfOrderId) {
+  const donations = await prisma.donation.findMany({
+    where: { cfOrderId, status: 'PENDING' },
+    include: categoryInclude,
+  });
+
+  if (donations.length === 0) {
+    return [];
+  }
+
+  await prisma.donation.updateMany({
+    where: { cfOrderId, status: 'PENDING' },
+    data: { status: 'FAILED' },
+  });
+
+  return prisma.donation.findMany({
+    where: { cfOrderId },
+    include: categoryInclude,
+  });
+}
+
+async function syncDonationFromCashfree(donation) {
+  if (!donation.cfOrderId) {
+    return donation;
+  }
+
+  if (donation.status === 'COMPLETED') {
+    return sendCertificateIfNeeded(donation);
+  }
+
+  if (donation.status !== 'PENDING') {
+    return donation;
+  }
+
+  try {
+    const cashfreeOrder = await getCashfreeOrderStatus(donation.cfOrderId);
+    let orderStatus = cashfreeOrder.order_status;
+    let paymentId = cashfreeOrder.cf_payment_id || donation.cfPaymentId;
+
+    const payments = await getCashfreeOrderPayments(donation.cfOrderId);
+    const successfulPayment = findSuccessfulPayment(payments);
+
+    if (successfulPayment) {
+      orderStatus = 'PAID';
+      paymentId = successfulPayment.cf_payment_id || paymentId;
+    }
+
+    if (orderStatus === 'PAID' || successfulPayment) {
+      const completed = await completeDonation(
+        donation.id,
+        paymentId || donation.cfPaymentId
+      );
+      return completed || donation;
+    }
+
+    if (isFailedOrderStatus(orderStatus)) {
+      return failDonation(donation.id);
+    }
+
+    const failedPayment = findFailedPayment(payments);
+
+    if (failedPayment && !hasPendingPayment(payments)) {
+      return failDonation(donation.id);
+    }
+  } catch (syncError) {
+    console.error('syncDonationFromCashfree error:', syncError.message);
+  }
+
+  return donation;
 }
 
 async function markDonationFailed(donationId) {
@@ -96,6 +252,10 @@ async function createOrder(req, res) {
       message,
     } = req.body;
 
+    const parsedAmount = Number(amount);
+    const trimmedName = String(donorName).trim();
+    const trimmedEmail = String(donorEmail).trim();
+
     const category = await prisma.donationCategory.findUnique({
       where: { slug: categorySlug },
     });
@@ -107,11 +267,11 @@ async function createOrder(req, res) {
     const donation = await prisma.donation.create({
       data: {
         categoryId: category.id,
-        donorName,
-        donorEmail,
-        donorPhone: donorPhone || null,
-        amount,
-        message: message || null,
+        donorName: trimmedName,
+        donorEmail: trimmedEmail,
+        donorPhone: donorPhone ? String(donorPhone).trim() : null,
+        amount: parsedAmount,
+        message: message ? String(message).trim() : null,
         status: 'PENDING',
       },
     });
@@ -122,16 +282,16 @@ async function createOrder(req, res) {
 
     const cashfreeOrder = await createCashfreeOrder({
       order_id: orderId,
-      order_amount: Number(amount),
+      order_amount: parsedAmount,
       order_currency: 'INR',
       customer_details: {
-        customer_id: donorEmail.replace(/[^a-zA-Z0-9_-]/g, '_'),
-        customer_email: donorEmail,
-        customer_phone: donorPhone || '9999999999',
-        customer_name: donorName,
+        customer_id: trimmedEmail.replace(/[^a-zA-Z0-9_-]/g, '_'),
+        customer_email: trimmedEmail,
+        customer_phone: donorPhone ? String(donorPhone).trim() : '9999999999',
+        customer_name: trimmedName,
       },
       order_meta: {
-        return_url: `${frontendUrl}/donation-success?donation_id=${donation.id}`,
+        return_url: `${frontendUrl}/donation-status?donation_id=${donation.id}`,
         notify_url: `${backendUrl}/api/donations/webhook`,
       },
     });
@@ -165,29 +325,33 @@ async function createOrder(req, res) {
 
 async function handleWebhook(req, res) {
   try {
-    const payload = req.body?.data || req.body;
-    const orderId = payload?.order?.order_id || payload?.order_id;
+    const body = req.body || {};
+    const payload = body.data || body;
+    const webhookType = body.type;
+
+    const orderId = extractWebhookOrderId(payload);
     const orderStatus = payload?.order?.order_status || payload?.order_status;
+    const paymentStatus =
+      payload?.payment?.payment_status || payload?.payment_status;
     const paymentId =
       payload?.payment?.cf_payment_id || payload?.cf_payment_id;
 
     if (!orderId) {
-      return res.status(400).json({ error: 'Missing order_id' });
+      console.warn('Cashfree webhook ignored: missing order_id');
+      return res.status(200).json({ success: true, ignored: true });
     }
 
-    if (orderStatus === 'PAID') {
-      await prisma.donation.updateMany({
-        where: { cfOrderId: orderId },
-        data: {
-          status: 'COMPLETED',
-          cfPaymentId: paymentId || null,
-        },
-      });
-    } else if (orderStatus === 'FAILED' || orderStatus === 'EXPIRED') {
-      await prisma.donation.updateMany({
-        where: { cfOrderId: orderId },
-        data: { status: 'FAILED' },
-      });
+    const paid = isCashfreePaymentSuccess({ paymentStatus, orderStatus, webhookType });
+    const failed = isCashfreePaymentFailed({ paymentStatus, orderStatus, webhookType });
+
+    if (paid) {
+      const completed = await completeDonationsByOrderId(orderId, paymentId || null);
+
+      if (completed.length === 0) {
+        console.warn('Cashfree webhook: no donation found for order', orderId);
+      }
+    } else if (failed) {
+      await failDonationsByOrderId(orderId);
     }
 
     res.status(200).json({ success: true });
@@ -197,59 +361,29 @@ async function handleWebhook(req, res) {
   }
 }
 
+async function getDonationById(id) {
+  return prisma.donation.findUnique({
+    where: { id },
+    include: categoryInclude,
+  });
+}
+
+async function refreshDonationStatus(id) {
+  const donation = await getDonationById(id);
+
+  if (!donation) {
+    return null;
+  }
+
+  return syncDonationFromCashfree(donation);
+}
+
 async function getDonationStatus(req, res) {
   try {
-    const { id } = req.params;
-
-    const donation = await prisma.donation.findUnique({
-      where: { id },
-      include: {
-        category: {
-          select: { name: true, slug: true },
-        },
-      },
-    });
+    const donation = await refreshDonationStatus(req.params.id);
 
     if (!donation) {
       return res.status(404).json({ error: 'Donation not found' });
-    }
-
-    if (donation.status === 'PENDING' && donation.cfOrderId) {
-      try {
-        const cashfreeOrder = await getCashfreeOrderStatus(donation.cfOrderId);
-        const orderStatus = cashfreeOrder.order_status;
-
-        if (orderStatus === 'PAID') {
-          const updated = await prisma.donation.update({
-            where: { id },
-            data: {
-              status: 'COMPLETED',
-              cfPaymentId: cashfreeOrder.cf_payment_id || donation.cfPaymentId,
-            },
-            include: {
-              category: {
-                select: { name: true, slug: true },
-              },
-            },
-          });
-          return res.json(updated);
-        }
-
-        if (orderStatus === 'FAILED' || orderStatus === 'EXPIRED') {
-          const updated = await prisma.donation.update({
-            where: { id },
-            data: { status: 'FAILED' },
-            include: {
-              category: {
-                select: { name: true, slug: true },
-              },
-            },
-          });
-          return res.json(updated);
-        }
-      } catch (pollError) {
-        console.error('Cashfree poll error:', pollError.message);
-      }
     }
 
     res.json(donation);
@@ -259,8 +393,28 @@ async function getDonationStatus(req, res) {
   }
 }
 
+async function verifyDonation(req, res) {
+  try {
+    let donation = await refreshDonationStatus(req.params.id);
+
+    if (!donation) {
+      return res.status(404).json({ error: 'Donation not found' });
+    }
+
+    if (donation.status === 'PENDING' && req.body?.paymentCancelled) {
+      donation = (await failDonation(donation.id)) || donation;
+    }
+
+    res.json(donation);
+  } catch (error) {
+    console.error('verifyDonation error:', error);
+    res.status(500).json({ error: 'Failed to verify donation' });
+  }
+}
+
 module.exports = {
   createOrder,
   handleWebhook,
   getDonationStatus,
+  verifyDonation,
 };

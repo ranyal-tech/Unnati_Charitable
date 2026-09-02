@@ -190,10 +190,29 @@ async function getCashfreeOrderStatus(orderId) {
   return response.data;
 }
 
+async function getCashfreeOrderPayments(orderId) {
+  validateCashfreeConfig();
+
+  const response = await axios.get(
+    `${getCashfreeBaseUrl()}/orders/${orderId}/payments`,
+    { headers: getCashfreeHeaders() }
+  );
+
+  const data = response.data;
+  if (Array.isArray(data)) {
+    return data;
+  }
+  if (Array.isArray(data?.payments)) {
+    return data.payments;
+  }
+  return [];
+}
+
 module.exports = {
   CashfreeConfigError,
   createCashfreeOrder,
   getCashfreeOrderStatus,
+  getCashfreeOrderPayments,
   getCashfreeEnvironment,
   getCashfreePublicUrls,
   logCashfreeConfig,

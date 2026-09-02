@@ -19,7 +19,7 @@ export default function ProgramBanner({ category, selected = false, className = 
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
         {selected && (
-          <span className="absolute right-3 top-3 rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white shadow">
+          <span className="absolute right-3 top-3 rounded-full bg-brand-600 px-3 py-1 text-xs font-bold text-white shadow-lg shadow-brand-900/20">
             Selected
           </span>
         )}
@@ -39,7 +39,7 @@ export default function ProgramBanner({ category, selected = false, className = 
         </span>
       </div>
       {selected && (
-        <span className="absolute right-3 top-3 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-emerald-800 shadow">
+        <span className="absolute right-3 top-3 rounded-full bg-white/95 px-3 py-1 text-xs font-bold text-brand-800 shadow-lg">
           Selected
         </span>
       )}

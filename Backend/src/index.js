@@ -74,4 +74,5 @@ app.use((err, _req, res, _next) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   logCashfreeConfig();
+  require('./services/emailService').logEmailConfig();
 });

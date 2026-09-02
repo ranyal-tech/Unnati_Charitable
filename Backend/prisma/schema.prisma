@@ -45,6 +45,7 @@ model Donation {
   cfOrderId          String?
   cfPaymentId        String?
   cfPaymentSessionId String?
+  certificateSentAt  DateTime?
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
 

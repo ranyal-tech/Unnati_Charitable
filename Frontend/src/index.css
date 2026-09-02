@@ -1,5 +1,101 @@
 @import "tailwindcss";
 
+@theme {
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-sans: "DM Sans", system-ui, sans-serif;
+
+  --color-brand-50: #ecfdf5;
+  --color-brand-100: #d1fae5;
+  --color-brand-200: #a7f3d0;
+  --color-brand-300: #6ee7b7;
+  --color-brand-400: #34d399;
+  --color-brand-500: #10b981;
+  --color-brand-600: #059669;
+  --color-brand-700: #047857;
+  --color-brand-800: #065f46;
+  --color-brand-900: #064e3b;
+
+  --color-warm-400: #fbbf24;
+  --color-warm-500: #f59e0b;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  @apply bg-stone-50 text-stone-900 antialiased;
+  @apply bg-[#faf9f7] font-sans text-stone-800 antialiased;
+  background-image:
+    radial-gradient(circle at 0% 0%, rgba(16, 185, 129, 0.06), transparent 42%),
+    radial-gradient(circle at 100% 0%, rgba(245, 158, 11, 0.05), transparent 38%);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg bg-brand-700 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-800 active:scale-[0.99];
+}
+
+.btn-secondary {
+  @apply inline-flex items-center justify-center gap-2 rounded-full border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20;
+}
+
+.btn-outline {
+  @apply inline-flex items-center justify-center gap-2 rounded-full border border-stone-300 bg-white px-6 py-3 text-sm font-semibold text-stone-700 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-800;
+}
+
+.section-eyebrow {
+  @apply text-xs font-bold uppercase tracking-[0.2em] text-brand-600;
+}
+
+.card {
+  @apply rounded-3xl border border-stone-200/80 bg-white shadow-sm shadow-stone-200/50;
+}
+
+.card-hover {
+  @apply transition duration-300 hover:-translate-y-1 hover:border-brand-200 hover:shadow-lg hover:shadow-brand-100/60;
+}
+
+.input-field {
+  @apply w-full rounded-2xl border border-stone-200 bg-stone-50/50 px-4 py-3 text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-float {
+  animation: float 5s ease-in-out infinite;
+}
+
+.animate-fade-up {
+  animation: fade-up 0.6s ease-out both;
+}
+
+.hero-pattern {
+  background-image:
+    radial-gradient(circle at 20% 80%, rgba(253, 230, 138, 0.12) 0%, transparent 50%),
+    linear-gradient(135deg, #047857 0%, #059669 50%, #0d9488 100%);
+}
+
+.progress-bar {
+  @apply h-2 overflow-hidden rounded-full bg-stone-100;
+}
+
+.progress-bar-fill {
+  @apply h-full rounded-full bg-gradient-to-r from-brand-500 to-teal-500 transition-all duration-700 ease-out;
 }

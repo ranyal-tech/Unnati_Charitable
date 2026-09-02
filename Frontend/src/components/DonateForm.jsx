@@ -3,11 +3,39 @@ import { createDonationOrder } from '../services/api';
 
 const PRESET_AMOUNTS = [500, 1000, 2500, 5000];
 
+function getCashfreeMode() {
+  return import.meta.env.VITE_CASHFREE_MODE || 'sandbox';
+}
+
+function loadCashfreeSdk() {
+  if (typeof window.Cashfree !== 'undefined') {
+    return Promise.resolve(window.Cashfree);
+  }
+
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-cashfree-sdk="true"]');
+    if (existing) {
+      existing.addEventListener('load', () => resolve(window.Cashfree));
+      existing.addEventListener('error', () => reject(new Error('Failed to load Cashfree SDK')));
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://sdk.cashfree.com/js/v3/cashfree.js';
+    script.async = true;
+    script.dataset.cashfreeSdk = 'true';
+    script.onload = () => resolve(window.Cashfree);
+    script.onerror = () => reject(new Error('Failed to load Cashfree SDK'));
+    document.body.appendChild(script);
+  });
+}
+
 export default function DonateForm({
   categorySlug,
   categoryName,
   programs = [],
   onProgramChange,
+  embedded = false,
 }) {
   const [form, setForm] = useState({
     donorName: '',
@@ -35,163 +63,198 @@ export default function DonateForm({
     try {
       const { paymentSessionId } = await createDonationOrder({
         categorySlug,
-        amount: form.amount,
-        donorName: form.donorName,
-        donorEmail: form.donorEmail,
-        donorPhone: form.donorPhone,
-        message: form.message,
+        amount: Number(form.amount),
+        donorName: form.donorName.trim(),
+        donorEmail: form.donorEmail.trim(),
+        donorPhone: form.donorPhone.trim(),
+        message: form.message.trim(),
       });
 
-      const cashfreeMode = import.meta.env.VITE_CASHFREE_MODE || 'sandbox';
-
-      if (typeof window.Cashfree === 'undefined') {
-        throw new Error('Cashfree SDK failed to load. Please refresh and try again.');
+      if (!paymentSessionId) {
+        throw new Error('Payment session was not created. Please try again.');
       }
 
-      const cashfree = window.Cashfree({ mode: cashfreeMode });
+      const Cashfree = await loadCashfreeSdk();
+
+      if (typeof Cashfree !== 'function') {
+        throw new Error('Cashfree SDK is unavailable. Please refresh and try again.');
+      }
+
+      const cashfree = Cashfree({ mode: getCashfreeMode() });
+
+      // Redirect checkout — on success or failure Cashfree returns to our branded status page
+      // instead of showing the generic error screen inside a popup modal.
       await cashfree.checkout({
         paymentSessionId,
         redirectTarget: '_self',
       });
     } catch (err) {
       setError(err.message || 'Failed to start payment');
+    } finally {
       setLoading(false);
     }
   };
 
+  const wrapperClass = embedded
+    ? ''
+    : 'card overflow-hidden shadow-md shadow-stone-200/60';
+
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm"
-    >
-      <h2 className="text-2xl font-bold text-stone-900">Donate to {categoryName}</h2>
-      <p className="mt-2 text-sm text-stone-600">
-        Your contribution will go directly towards this program.
-      </p>
-
-      {programs.length > 0 && (
-        <div className="mt-4">
-          <label className="mb-1 block text-sm font-medium text-stone-700">
-            Donation Program
-          </label>
-          <select
-            value={categorySlug}
-            onChange={(event) => onProgramChange?.(event.target.value)}
-            className="w-full rounded-xl border border-stone-300 px-4 py-3 outline-none focus:border-emerald-600"
-          >
-            {programs.map((program) => (
-              <option key={program.slug} value={program.slug}>
-                {program.name}
-              </option>
-            ))}
-          </select>
+    <form onSubmit={handleSubmit} className={wrapperClass}>
+      {!embedded && (
+        <div className="bg-gradient-to-r from-brand-700 to-teal-600 px-6 py-5 text-white">
+          <h2 className="font-display text-2xl font-bold">Donate to {categoryName}</h2>
+          <p className="mt-1 text-sm text-emerald-100">
+            Your contribution goes directly to this program.
+          </p>
         </div>
       )}
 
-      {error && (
-        <div className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
+      <div className={embedded ? '' : 'p-6 md:p-7'}>
+        {embedded && (
+          <p className="mb-5 text-sm text-stone-600">
+            Fill in your details below. Payments are secured by Cashfree.
+          </p>
+        )}
 
-      <div className="mt-6 grid gap-4">
-        <div>
-          <label className="mb-1 block text-sm font-medium text-stone-700">
-            Full Name
-          </label>
-          <input
-            type="text"
-            name="donorName"
-            value={form.donorName}
-            onChange={handleChange}
-            required
-            className="w-full rounded-xl border border-stone-300 px-4 py-3 outline-none focus:border-emerald-600"
-            placeholder="Enter your name"
-          />
-        </div>
-
-        <div>
-          <label className="mb-1 block text-sm font-medium text-stone-700">
-            Email
-          </label>
-          <input
-            type="email"
-            name="donorEmail"
-            value={form.donorEmail}
-            onChange={handleChange}
-            required
-            className="w-full rounded-xl border border-stone-300 px-4 py-3 outline-none focus:border-emerald-600"
-            placeholder="you@example.com"
-          />
-        </div>
-
-        <div>
-          <label className="mb-1 block text-sm font-medium text-stone-700">
-            Phone (optional)
-          </label>
-          <input
-            type="tel"
-            name="donorPhone"
-            value={form.donorPhone}
-            onChange={handleChange}
-            className="w-full rounded-xl border border-stone-300 px-4 py-3 outline-none focus:border-emerald-600"
-            placeholder="10-digit mobile number"
-          />
-        </div>
-
-        <div>
-          <label className="mb-2 block text-sm font-medium text-stone-700">
-            Donation Amount (INR)
-          </label>
-          <div className="mb-3 flex flex-wrap gap-2">
-            {PRESET_AMOUNTS.map((amount) => (
-              <button
-                key={amount}
-                type="button"
-                onClick={() => setForm((prev) => ({ ...prev, amount }))}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                  form.amount === amount
-                    ? 'bg-emerald-700 text-white'
-                    : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
-                }`}
-              >
-                ₹{amount}
-              </button>
-            ))}
+        {programs.length > 0 && (
+          <div className="mb-5">
+            <label className="mb-1.5 block text-sm font-semibold text-stone-700">
+              Donation Program
+            </label>
+            <select
+              value={categorySlug}
+              onChange={(event) => onProgramChange?.(event.target.value)}
+              className="input-field"
+            >
+              {programs.map((program) => (
+                <option key={program.slug} value={program.slug}>
+                  {program.name}
+                </option>
+              ))}
+            </select>
           </div>
-          <input
-            type="number"
-            name="amount"
-            min="1"
-            value={form.amount}
-            onChange={handleChange}
-            required
-            className="w-full rounded-xl border border-stone-300 px-4 py-3 outline-none focus:border-emerald-600"
-          />
+        )}
+
+        {error && (
+          <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
+        <div className="grid gap-4">
+          <div>
+            <label className="mb-1.5 block text-sm font-semibold text-stone-700">Full Name</label>
+            <input
+              type="text"
+              name="donorName"
+              value={form.donorName}
+              onChange={handleChange}
+              required
+              className="input-field"
+              placeholder="Enter your name"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-semibold text-stone-700">Email</label>
+            <input
+              type="email"
+              name="donorEmail"
+              value={form.donorEmail}
+              onChange={handleChange}
+              required
+              className="input-field"
+              placeholder="you@example.com"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-semibold text-stone-700">
+              Phone <span className="font-normal text-stone-400">(optional)</span>
+            </label>
+            <input
+              type="tel"
+              name="donorPhone"
+              value={form.donorPhone}
+              onChange={handleChange}
+              className="input-field"
+              placeholder="10-digit mobile number"
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-stone-700">
+              Donation Amount (INR)
+            </label>
+            <div className="mb-3 flex flex-wrap gap-2">
+              {PRESET_AMOUNTS.map((amount) => (
+                <button
+                  key={amount}
+                  type="button"
+                  onClick={() => setForm((prev) => ({ ...prev, amount }))}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                    form.amount === amount
+                      ? 'bg-brand-700 text-white shadow-sm shadow-brand-700/25'
+                      : 'bg-stone-100 text-stone-700 hover:bg-brand-50 hover:text-brand-800'
+                  }`}
+                >
+                  ₹{amount.toLocaleString('en-IN')}
+                </button>
+              ))}
+            </div>
+            <input
+              type="number"
+              name="amount"
+              min="1"
+              value={form.amount}
+              onChange={handleChange}
+              required
+              className="input-field"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-semibold text-stone-700">
+              Message <span className="font-normal text-stone-400">(optional)</span>
+            </label>
+            <textarea
+              name="message"
+              value={form.message}
+              onChange={handleChange}
+              rows={3}
+              className="input-field resize-none"
+              placeholder="Share a message of support"
+            />
+          </div>
         </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium text-stone-700">
-            Message (optional)
-          </label>
-          <textarea
-            name="message"
-            value={form.message}
-            onChange={handleChange}
-            rows={3}
-            className="w-full rounded-xl border border-stone-300 px-4 py-3 outline-none focus:border-emerald-600"
-            placeholder="Share a message of support"
-          />
-        </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="btn-primary mt-6 w-full !rounded-2xl !py-3.5 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {loading ? (
+            <>
+              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              Redirecting to secure payment...
+            </>
+          ) : (
+            <>Proceed to Secure Payment</>
+          )}
+        </button>
+
+        <p className="mt-4 flex items-center justify-center gap-2 text-xs text-stone-400">
+          <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor">
+            <path
+              fillRule="evenodd"
+              d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+              clipRule="evenodd"
+            />
+          </svg>
+          Secured by Cashfree Payments
+        </p>
       </div>
-
-      <button
-        type="submit"
-        disabled={loading}
-        className="mt-6 w-full rounded-xl bg-emerald-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {loading ? 'Redirecting to payment...' : 'Proceed to Pay with Cashfree'}
-      </button>
     </form>
   );
 }

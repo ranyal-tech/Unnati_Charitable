@@ -20,10 +20,10 @@ export default function CategoryCard({
     : 0;
 
   const cardBody = (
-    <div className="flex h-full flex-col p-5">
+    <div className="flex h-full flex-col p-5 md:p-6">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-lg font-semibold leading-snug text-stone-900">
+          <h3 className="font-display text-xl font-bold leading-snug text-stone-900">
             {category.name}
           </h3>
           <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-stone-500">
@@ -33,14 +33,14 @@ export default function CategoryCard({
         {selectable && (
           <span
             aria-hidden="true"
-            className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+            className={`mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-all ${
               selected
-                ? 'border-emerald-600 bg-emerald-600 text-white'
+                ? 'border-brand-600 bg-brand-600 text-white shadow-sm shadow-brand-600/30'
                 : 'border-stone-300 bg-white'
             }`}
           >
             {selected && (
-              <svg viewBox="0 0 12 12" className="h-2.5 w-2.5 fill-current">
+              <svg viewBox="0 0 12 12" className="h-3 w-3 fill-current">
                 <path d="M10.2 2.8 4.8 8.2 1.8 5.2l-.9.9 3.9 3.9 6.3-6.3-.9-.9Z" />
               </svg>
             )}
@@ -48,21 +48,17 @@ export default function CategoryCard({
         )}
       </div>
 
-      <div className="mt-5 rounded-xl bg-stone-50 p-4">
+      <div className="mt-5 rounded-2xl bg-gradient-to-br from-stone-50 to-brand-50/40 p-4">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-stone-400">
-              Raised
-            </p>
-            <p className="mt-1 text-lg font-bold text-emerald-700">
+            <p className="text-xs font-bold uppercase tracking-wider text-stone-400">Raised</p>
+            <p className="font-display mt-1 text-2xl font-bold text-brand-700">
               {formatCurrency(category.totalRaised)}
             </p>
           </div>
           {category.targetAmount && (
             <div className="text-right">
-              <p className="text-xs font-medium uppercase tracking-wide text-stone-400">
-                Goal
-              </p>
+              <p className="text-xs font-bold uppercase tracking-wider text-stone-400">Goal</p>
               <p className="mt-1 text-sm font-semibold text-stone-700">
                 {formatCurrency(category.targetAmount)}
               </p>
@@ -71,18 +67,15 @@ export default function CategoryCard({
         </div>
 
         {category.targetAmount && (
-          <div className="mt-3">
-            <div className="mb-1 flex justify-between text-xs text-stone-500">
+          <div className="mt-4">
+            <div className="mb-2 flex justify-between text-xs font-medium text-stone-500">
               <span>{Math.round(progress)}% funded</span>
               <span>
                 {category.donorCount} donor{category.donorCount !== 1 ? 's' : ''}
               </span>
             </div>
-            <div className="h-1.5 overflow-hidden rounded-full bg-stone-200">
-              <div
-                className="h-full rounded-full bg-emerald-600 transition-all duration-500"
-                style={{ width: `${progress}%` }}
-              />
+            <div className="progress-bar">
+              <div className="progress-bar-fill" style={{ width: `${progress}%` }} />
             </div>
           </div>
         )}
@@ -91,7 +84,7 @@ export default function CategoryCard({
       {!selectable && (
         <Link
           to={`/donations?program=${category.slug}`}
-          className="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-emerald-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800"
+          className="btn-primary mt-5 w-full !rounded-2xl"
         >
           Donate Now
         </Link>
@@ -99,12 +92,12 @@ export default function CategoryCard({
     </div>
   );
 
-  const cardClasses = `overflow-hidden rounded-2xl bg-white text-left shadow-sm transition-all duration-200 ${
+  const cardClasses = `card card-hover overflow-hidden text-left ${
     selectable
       ? selected
-        ? 'ring-2 ring-emerald-500 ring-offset-2 shadow-md'
-        : 'border border-stone-200 hover:border-emerald-300 hover:shadow-md'
-      : 'border border-stone-200 hover:shadow-md'
+        ? 'ring-2 ring-brand-500 ring-offset-2 shadow-lg shadow-brand-100/50'
+        : 'cursor-pointer'
+      : ''
   }`;
 
   if (selectable) {

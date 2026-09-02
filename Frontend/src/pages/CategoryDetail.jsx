@@ -36,7 +36,7 @@ export default function CategoryDetail() {
   if (loading) {
     return (
       <section className="mx-auto max-w-6xl px-4 py-16">
-        <p className="text-stone-500">Loading program details...</p>
+        <div className="card h-96 animate-pulse bg-stone-100" />
       </section>
     );
   }
@@ -44,11 +44,11 @@ export default function CategoryDetail() {
   if (error || !category) {
     return (
       <section className="mx-auto max-w-6xl px-4 py-16">
-        <div className="rounded-lg bg-red-50 px-4 py-3 text-red-700">
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-red-700">
           {error || 'Program not found'}
         </div>
-        <Link to="/donations" className="mt-4 inline-block text-emerald-700 hover:underline">
-          Back to all programs
+        <Link to="/donations" className="mt-4 inline-block font-medium text-brand-700 hover:underline">
+          ← Back to all programs
         </Link>
       </section>
     );
@@ -59,31 +59,35 @@ export default function CategoryDetail() {
     : 0;
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-16">
-      <Link to="/donations" className="text-sm font-medium text-emerald-700 hover:underline">
+    <section className="mx-auto max-w-6xl px-4 py-10 md:py-16">
+      <Link
+        to="/donations"
+        className="inline-flex items-center gap-1 text-sm font-medium text-brand-700 hover:underline"
+      >
         ← Back to all programs
       </Link>
 
-      <div className="mt-6 grid gap-8 lg:grid-cols-2">
+      <div className="mt-6 grid gap-10 lg:grid-cols-2 lg:gap-12">
         <div>
-          <ProgramBanner category={category} />
+          <ProgramBanner category={category} className="shadow-lg shadow-stone-200/50" />
 
-          <div className="mt-6">
-            <h1 className="text-4xl font-bold text-stone-900">{category.name}</h1>
-            <p className="mt-4 leading-relaxed text-stone-600">{category.description}</p>
+          <div className="mt-8">
+            <p className="section-eyebrow">Program</p>
+            <h1 className="font-display mt-2 text-4xl font-bold text-stone-900">{category.name}</h1>
+            <p className="mt-4 text-lg leading-relaxed text-stone-600">{category.description}</p>
 
-            <div className="mt-6 rounded-2xl border border-stone-200 bg-white p-5">
-              <div className="flex items-center justify-between">
+            <div className="card mt-8 p-6">
+              <div className="flex items-end justify-between gap-4">
                 <div>
-                  <p className="text-sm text-stone-500">Total Raised</p>
-                  <p className="text-2xl font-bold text-emerald-700">
+                  <p className="text-xs font-bold uppercase tracking-wider text-stone-400">Total Raised</p>
+                  <p className="font-display mt-1 text-3xl font-bold text-brand-700">
                     {formatCurrency(category.totalRaised)}
                   </p>
                 </div>
                 {category.targetAmount && (
                   <div className="text-right">
-                    <p className="text-sm text-stone-500">Goal</p>
-                    <p className="text-lg font-semibold text-stone-800">
+                    <p className="text-xs font-bold uppercase tracking-wider text-stone-400">Goal</p>
+                    <p className="mt-1 text-lg font-semibold text-stone-800">
                       {formatCurrency(category.targetAmount)}
                     </p>
                   </div>
@@ -91,18 +95,16 @@ export default function CategoryDetail() {
               </div>
 
               {category.targetAmount && (
-                <div className="mt-4 h-3 overflow-hidden rounded-full bg-stone-100">
-                  <div
-                    className="h-full rounded-full bg-emerald-600"
-                    style={{ width: `${progress}%` }}
-                  />
+                <div className="mt-5">
+                  <div className="progress-bar !h-3">
+                    <div className="progress-bar-fill" style={{ width: `${progress}%` }} />
+                  </div>
+                  <p className="mt-3 text-sm text-stone-500">
+                    {Math.round(progress)}% funded · {category.donorCount} generous donor
+                    {category.donorCount !== 1 ? 's' : ''}
+                  </p>
                 </div>
               )}
-
-              <p className="mt-3 text-sm text-stone-500">
-                {category.donorCount} generous donor
-                {category.donorCount !== 1 ? 's' : ''} contributed
-              </p>
             </div>
           </div>
         </div>

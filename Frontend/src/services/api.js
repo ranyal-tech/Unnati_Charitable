@@ -43,3 +43,9 @@ export const createDonationOrder = (payload) =>
   });
 
 export const getDonationStatus = (id) => request(`/donations/${id}/status`);
+
+export const verifyDonation = (id, options = {}) =>
+  request(`/donations/${id}/verify`, {
+    method: 'POST',
+    body: JSON.stringify(options),
+  });
