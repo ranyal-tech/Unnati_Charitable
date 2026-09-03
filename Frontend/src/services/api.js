@@ -1,4 +1,13 @@
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+const configuredApiUrl = import.meta.env.VITE_API_URL;
+const usesLocalhostInProd = import.meta.env.PROD && configuredApiUrl?.includes('localhost');
+
+if (usesLocalhostInProd) {
+  console.warn(
+    `VITE_API_URL was built with a localhost value ("${configuredApiUrl}") in a production build. Falling back to "/api".`
+  );
+}
+
+const API_URL = usesLocalhostInProd ? '/api' : configuredApiUrl || '/api';
 
 async function request(path, options = {}) {
   const url = `${API_URL}${path}`;
