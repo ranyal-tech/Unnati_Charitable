@@ -4,6 +4,8 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import './index.css';
 
+console.log('Frontend build check:', new Date().toISOString());
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
