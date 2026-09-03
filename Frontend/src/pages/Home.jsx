@@ -30,7 +30,6 @@ export default function Home() {
     }
   }, [selectedProgram]);
 
-  const totalRaised = categories.reduce((sum, c) => sum + (c.totalRaised || 0), 0);
   const totalDonors = categories.reduce((sum, c) => sum + (c.donorCount || 0), 0);
 
   const scrollToPrograms = () => {
@@ -40,7 +39,6 @@ export default function Home() {
   return (
     <>
       <HeroSection
-        totalRaised={totalRaised}
         totalDonors={totalDonors}
         programCount={categories.length}
         loading={loading}

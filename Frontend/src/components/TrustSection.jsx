@@ -8,8 +8,8 @@ function TrustIcon({ children }) {
 
 const TRUST_ITEMS = [
   {
-    title: 'Transparent Progress',
-    text: 'Track real-time fundraising for every program and see exactly how much has been raised.',
+    title: 'Full Transparency',
+    text: 'Every donation is tracked so you always know exactly where your contribution goes.',
     icon: (
       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M3 3v18h18M7 16l4-4 4 4 5-6" strokeLinecap="round" strokeLinejoin="round" />

@@ -3,12 +3,10 @@ const prisma = require("../lib/prisma");
 async function getCategoryStats(categoryId) {
   const stats = await prisma.donation.aggregate({
     where: { categoryId, status: "COMPLETED" },
-    _sum: { amount: true },
     _count: true,
   });
 
   return {
-    totalRaised: stats._sum.amount || 0,
     donorCount: stats._count,
   };
 }

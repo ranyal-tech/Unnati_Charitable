@@ -9,7 +9,6 @@ const categories = [
     description:
       'Help provide nutritious meals to families and individuals who struggle to afford daily food.',
     imageUrl: '/images/food-for-needy.jpg',
-    targetAmount: 500000,
   },
   {
     name: 'Stationery for Schools',
@@ -17,7 +16,6 @@ const categories = [
     description:
       'Support students with books, notebooks, pens, and other essential school supplies.',
     imageUrl: '/images/stationery-for-schools.jpg',
-    targetAmount: 200000,
   },
   {
     name: 'Orphanage Donations',
@@ -25,7 +23,6 @@ const categories = [
     description:
       'Contribute to the care, education, and wellbeing of children in orphanages.',
     imageUrl: '/images/orphanage-donations.jpg',
-    targetAmount: 750000,
   },
   {
     name: 'Winter Essentials',
@@ -33,7 +30,6 @@ const categories = [
     description:
       'Provide blankets, warm clothes, and shelter support to those facing harsh winters.',
     imageUrl: '/images/winter-essentials.jpg',
-    targetAmount: 300000,
   },
 ];
 

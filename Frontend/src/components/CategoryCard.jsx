@@ -1,24 +1,12 @@
 import { Link } from 'react-router-dom';
 import ProgramBanner from './ProgramBanner';
 
-function formatCurrency(amount) {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
-
 export default function CategoryCard({
   category,
   selectable = false,
   selected = false,
   onSelect,
 }) {
-  const progress = category.targetAmount
-    ? Math.min((category.totalRaised / category.targetAmount) * 100, 100)
-    : 0;
-
   const cardBody = (
     <div className="flex h-full flex-col p-5 md:p-6">
       <div className="flex items-start justify-between gap-3">
@@ -45,39 +33,6 @@ export default function CategoryCard({
               </svg>
             )}
           </span>
-        )}
-      </div>
-
-      <div className="mt-5 rounded-2xl bg-gradient-to-br from-stone-50 to-brand-50/40 p-4">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-stone-400">Raised</p>
-            <p className="font-display mt-1 text-2xl font-bold text-brand-700">
-              {formatCurrency(category.totalRaised)}
-            </p>
-          </div>
-          {category.targetAmount && (
-            <div className="text-right">
-              <p className="text-xs font-bold uppercase tracking-wider text-stone-400">Goal</p>
-              <p className="mt-1 text-sm font-semibold text-stone-700">
-                {formatCurrency(category.targetAmount)}
-              </p>
-            </div>
-          )}
-        </div>
-
-        {category.targetAmount && (
-          <div className="mt-4">
-            <div className="mb-2 flex justify-between text-xs font-medium text-stone-500">
-              <span>{Math.round(progress)}% funded</span>
-              <span>
-                {category.donorCount} donor{category.donorCount !== 1 ? 's' : ''}
-              </span>
-            </div>
-            <div className="progress-bar">
-              <div className="progress-bar-fill" style={{ width: `${progress}%` }} />
-            </div>
-          </div>
         )}
       </div>
 

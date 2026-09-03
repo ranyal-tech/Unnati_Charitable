@@ -1,13 +1,5 @@
 import { Link } from 'react-router-dom';
 
-function formatCurrency(amount) {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
-
 function CheckIcon() {
   return (
     <svg viewBox="0 0 20 20" className="h-4 w-4 shrink-0 text-brand-400" fill="currentColor">
@@ -21,14 +13,12 @@ function CheckIcon() {
 }
 
 export default function HeroSection({
-  totalRaised,
   totalDonors,
   programCount,
   loading,
   onStartDonating,
 }) {
   const stats = [
-    { label: 'Total Raised', value: loading ? '—' : formatCurrency(totalRaised) },
     { label: 'Donors', value: loading ? '—' : totalDonors.toLocaleString('en-IN') },
     { label: 'Programs', value: loading ? '—' : String(programCount) },
   ];
@@ -99,7 +89,7 @@ export default function HeroSection({
 
       {/* Floating stats card */}
       <div className="relative z-10 mx-auto -mt-16 max-w-4xl px-4 pb-4 lg:-mt-20">
-        <div className="grid overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-xl shadow-stone-900/10 sm:grid-cols-3">
+        <div className="grid overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-xl shadow-stone-900/10 sm:grid-cols-2">
           {stats.map((stat, index) => (
             <div
               key={stat.label}
