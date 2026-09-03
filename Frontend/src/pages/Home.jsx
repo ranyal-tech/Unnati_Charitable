@@ -17,7 +17,10 @@ export default function Home() {
   useEffect(() => {
     getCategories()
       .then(setCategories)
-      .catch((err) => setError(err.message))
+      .catch((err) => {
+        console.error(err);
+        setError(err.message);
+      })
       .finally(() => setLoading(false));
   }, []);
 

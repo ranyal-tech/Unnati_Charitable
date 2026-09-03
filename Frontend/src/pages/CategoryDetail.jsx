@@ -29,7 +29,10 @@ export default function CategoryDetail() {
         setCategory(categoryData);
         setPrograms(allPrograms);
       })
-      .catch((err) => setError(err.message))
+      .catch((err) => {
+        console.error(err);
+        setError(err.message);
+      })
       .finally(() => setLoading(false));
   }, [slug]);
 

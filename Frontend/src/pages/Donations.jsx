@@ -23,7 +23,10 @@ export default function Donations() {
           if (match) setSelectedProgram(match);
         }
       })
-      .catch((err) => setError(err.message))
+      .catch((err) => {
+        console.error(err);
+        setError(err.message);
+      })
       .finally(() => setLoading(false));
   }, [searchParams]);
 

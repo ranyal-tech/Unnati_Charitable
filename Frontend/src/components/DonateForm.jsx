@@ -89,6 +89,7 @@ export default function DonateForm({
         redirectTarget: '_self',
       });
     } catch (err) {
+      console.error(err);
       setError(err.message || 'Failed to start payment');
     } finally {
       setLoading(false);
