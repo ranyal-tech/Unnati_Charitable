@@ -1,3 +1,5 @@
+const crypto = require('crypto');
+
 const prisma = require('../lib/prisma');
 const {
   CashfreeConfigError,
@@ -74,6 +76,29 @@ function mapCashfreeError(error) {
   }
 
   return { status: 500, message: 'Failed to create donation order' };
+}
+
+function isValidCashfreeSignature(req) {
+  const signature = req.headers['x-webhook-signature'];
+  const timestamp = req.headers['x-webhook-timestamp'];
+  const secretKey = process.env.CASHFREE_SECRET_KEY;
+
+  if (!signature || !timestamp || !secretKey || !req.rawBody) {
+    return false;
+  }
+
+  const expectedSignature = crypto
+    .createHmac('sha256', secretKey)
+    .update(timestamp + req.rawBody)
+    .digest('base64');
+
+  const expectedBuffer = Buffer.from(expectedSignature);
+  const receivedBuffer = Buffer.from(signature);
+
+  return (
+    expectedBuffer.length === receivedBuffer.length &&
+    crypto.timingSafeEqual(expectedBuffer, receivedBuffer)
+  );
 }
 
 function extractWebhookOrderId(payload = {}) {
@@ -325,6 +350,11 @@ async function createOrder(req, res) {
 
 async function handleWebhook(req, res) {
   try {
+    if (!isValidCashfreeSignature(req)) {
+      console.warn('Cashfree webhook rejected: invalid or missing signature');
+      return res.status(401).json({ error: 'Invalid signature' });
+    }
+
     const body = req.body || {};
     const payload = body.data || body;
     const webhookType = body.type;

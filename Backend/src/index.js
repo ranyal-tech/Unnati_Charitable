@@ -58,7 +58,13 @@ app.use(
   })
 );
 
-app.use(express.json());
+app.use(
+  express.json({
+    verify: (req, _res, buf) => {
+      req.rawBody = buf;
+    },
+  })
+);
 
 app.get('/', (_req, res) => {
   res.json({ status: 'ok', service: 'Unnati Charitable Trust API' });
