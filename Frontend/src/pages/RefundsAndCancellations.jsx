@@ -26,7 +26,7 @@ const SECTIONS = [
   },
   {
     title: "5. How to Request a Refund",
-    body: `Email contact@unnaticharitable.org with the subject "Refund Request", along with your
+    body: `Email support@unnatiseva.com with the subject "Refund Request", along with your
     name, the email/phone used for the donation, the amount donated, and the payment reference/transaction ID. Our team will review your request and respond within 3 business days.`,
   },
   {

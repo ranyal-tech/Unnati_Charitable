@@ -22,10 +22,10 @@ export default function ContactUs() {
               <div>
                 <p className="text-sm font-semibold text-stone-900">Email</p>
                 <a
-                  href="mailto:contact@unnaticharitable.org"
+                  href="mailto:support@unnatiseva.com"
                   className="text-sm text-stone-600 hover:text-brand-700 hover:underline"
                 >
-                  contact@unnaticharitable.org
+                  support@unnatiseva.com
                 </a>
               </div>
             </div>
@@ -33,8 +33,8 @@ export default function ContactUs() {
               <span className="mt-0.5 text-brand-600">☎</span>
               <div>
                 <p className="text-sm font-semibold text-stone-900">Phone</p>
-                <a href="tel:+919876543210" className="text-sm text-stone-600 hover:text-brand-700 hover:underline">
-                  +91 98765 43210
+                <a href="tel:+919654746673" className="text-sm text-stone-600 hover:text-brand-700 hover:underline">
+                  +91 96547 46673
                 </a>
               </div>
             </div>

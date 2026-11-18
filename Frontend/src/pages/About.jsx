@@ -70,13 +70,13 @@ export default function About() {
           <h2 className="font-display mt-6 text-2xl font-bold text-stone-900">Get in Touch</h2>
           <div className="mt-6 space-y-3 text-stone-600">
             <p>
-              <a href="mailto:contact@unnaticharitable.org" className="font-medium text-brand-700 hover:underline">
-                contact@unnaticharitable.org
+              <a href="mailto:support@unnatiseva.com" className="font-medium text-brand-700 hover:underline">
+                support@unnatiseva.com
               </a>
             </p>
             <p>
-              <a href="tel:+919876543210" className="font-medium text-brand-700 hover:underline">
-                +91 98765 43210
+              <a href="tel:+919654746673" className="font-medium text-brand-700 hover:underline">
+                +91 96547 46673
               </a>
             </p>
             <p>India</p>

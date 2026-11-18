@@ -1,6 +1,7 @@
 import { Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
 import ScrollToTop from './components/ScrollToTop';
+import WhatsAppButton from './components/WhatsAppButton';
 import Home from './pages/Home';
 import Donations from './pages/Donations';
 import CategoryDetail from './pages/CategoryDetail';
@@ -28,6 +29,7 @@ export default function App() {
         <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
         <Route path="/refunds-and-cancellations" element={<RefundsAndCancellations />} />
       </Routes>
+      <WhatsAppButton />
     </Layout>
   );
 }

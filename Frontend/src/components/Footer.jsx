@@ -54,14 +54,14 @@ export default function Footer() {
             <ul className="mt-4 space-y-3 text-sm">
               <li className="flex items-start gap-3">
                 <span className="mt-0.5 text-brand-500">✉</span>
-                <a href="mailto:contact@unnaticharitable.org" className="hover:text-white">
-                  contact@unnaticharitable.org
+                <a href="mailto:support@unnatiseva.com" className="hover:text-white">
+                  support@unnatiseva.com
                 </a>
               </li>
               <li className="flex items-start gap-3">
                 <span className="mt-0.5 text-brand-500">☎</span>
-                <a href="tel:+919876543210" className="hover:text-white">
-                  +91 98765 43210
+                <a href="tel:+919654746673" className="hover:text-white">
+                  +91 96547 46673
                 </a>
               </li>
               <li className="flex items-start gap-3">
@@ -77,7 +77,8 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="border-t border-stone-800 py-5">
+      {/* Extra bottom padding keeps the floating WhatsApp button from covering these links. */}
+      <div className="border-t border-stone-800 pt-5 pb-20 sm:pb-24">
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-3 px-4 text-center text-sm text-stone-500 sm:flex-row sm:justify-between sm:text-left">
           <p>© {new Date().getFullYear()} Unnati Charitable Trust. All rights reserved.</p>
           <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
@@ -90,6 +91,33 @@ export default function Footer() {
             <Link to="/refunds-and-cancellations" className="transition hover:text-warm-400">
               Refunds &amp; Cancellations
             </Link>
+            <a
+              href="https://www.instagram.com/unnatiseva/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Follow Unnati Seva on Instagram (opens in a new tab)"
+              className="group inline-flex items-center gap-2 rounded-md transition hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900 sm:ml-1 sm:border-l sm:border-stone-700 sm:pl-5"
+            >
+              <svg
+                viewBox="0 0 32 32"
+                className="h-7 w-7 shrink-0 rounded-lg shadow-sm transition-transform duration-200 group-hover:scale-110"
+                aria-hidden="true"
+              >
+                <defs>
+                  <radialGradient id="footer-ig-gradient" cx="0.3" cy="1.07" r="1.3">
+                    <stop offset="0" stopColor="#FFDD55" />
+                    <stop offset="0.1" stopColor="#FFDD55" />
+                    <stop offset="0.5" stopColor="#FF543E" />
+                    <stop offset="1" stopColor="#C837AB" />
+                  </radialGradient>
+                </defs>
+                <rect width="32" height="32" rx="8" fill="url(#footer-ig-gradient)" />
+                <rect x="7" y="7" width="18" height="18" rx="5.5" fill="none" stroke="#fff" strokeWidth="2.2" />
+                <circle cx="16" cy="16" r="4.3" fill="none" stroke="#fff" strokeWidth="2.2" />
+                <circle cx="21.4" cy="10.6" r="1.35" fill="#fff" />
+              </svg>
+              <span>Follow us</span>
+            </a>
           </div>
         </div>
       </div>

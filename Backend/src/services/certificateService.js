@@ -197,7 +197,7 @@ function buildDonationCertificateHtml(donation) {
   const donationId = escapeHtml(donation.id);
   const impactText = escapeHtml(getProgramImpactText(donation.category?.name));
   const replyEmail = escapeHtml(
-    process.env.REPLY_TO_EMAIL || process.env.SMTP_USER || 'contact@unnaticharitable.org'
+    process.env.REPLY_TO_EMAIL || process.env.SMTP_USER || 'support@unnatiseva.com'
   );
   const logoMarkup = buildEmailLogoMarkup();
 
@@ -303,7 +303,7 @@ function buildDonationCertificateText(donation) {
   const programName = donation.category?.name || 'Charitable Program';
   const impactText = getProgramImpactText(programName);
   const replyEmail =
-    process.env.REPLY_TO_EMAIL || process.env.SMTP_USER || 'contact@unnaticharitable.org';
+    process.env.REPLY_TO_EMAIL || process.env.SMTP_USER || 'support@unnatiseva.com';
 
   return `Unnati Charitable Trust - Thank you for your donation
 
